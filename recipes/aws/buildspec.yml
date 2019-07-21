@@ -1,0 +1,30 @@
+version: 0.2
+
+env:
+  variables:
+    REACT_APP_BUILD_VERSION: $(date)
+
+phases:
+
+  install:
+    commands:
+      - aws --version
+      - node --version
+      - npm --version
+      - echo Installing dependencies...
+      - npm install
+
+  build:
+    commands:
+      - echo Building project...
+      - echo Build started on `date`
+      - npm run build
+      - echo Build completed on `date`
+
+artifacts:
+  files: "**/*"
+  base-directory: build
+
+cache:
+  paths:
+    - 'node_modules/**/*'

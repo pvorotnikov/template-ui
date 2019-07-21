@@ -1,0 +1,123 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: A stack for creating infrastructure to host static UI
+             on S3 and CloudFront.
+             It creates the following resources
+             - S3 bucket configured to host static websites accessible only by CloudFront
+             - CloudFront deployment with orign pointing to the S3 bucket
+
+Parameters:
+
+  IndexDocument:
+    Description: Default index document
+    Type: String
+    Default: index.html
+
+# ============================
+# Stack Resources
+# ============================
+Resources:
+
+  # ============================
+  # S3 Buckets
+  # ============================
+  S3Bucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        IndexDocument: !Ref IndexDocument
+        ErrorDocument: !Ref IndexDocument
+
+  # Create bucket policy allowing access only from CloudFront
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument:
+        Id: StaticSitePolicy
+        Version: 2012-10-17
+        Statement:
+          - Sid: PublicReadForGetBucketObjects
+            Effect: Allow
+            Action: 's3:GetObject'
+            Principal:
+              CanonicalUser: !GetAtt CloudFrontOriginAccessIdentity.S3CanonicalUserId
+            Resource: !Join
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref S3Bucket
+                - /*
+
+  # Identity for CloudFront to access the bucket
+  CloudFrontOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Ref S3Bucket
+
+  # CloudFront distribution
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        CustomErrorResponses:
+        - ErrorCode: 403
+          ResponseCode: 404
+          ResponsePagePath: !Sub '/${IndexDocument}'
+        - ErrorCode: 404
+          ResponseCode: 200
+          ResponsePagePath: !Sub '/${IndexDocument}'
+
+        DefaultCacheBehavior:
+          AllowedMethods:
+          - GET
+          - HEAD
+          - OPTIONS
+          CachedMethods:
+          - GET
+          - HEAD
+          - OPTIONS
+          Compress: true
+          DefaultTTL: 3600 # in seconds
+          ForwardedValues:
+            Cookies:
+              Forward: none
+            QueryString: false
+          MaxTTL: 86400 # in seconds
+          MinTTL: 60 # in seconds
+          TargetOriginId: s3origin
+          ViewerProtocolPolicy: allow-all
+        DefaultRootObject: !Ref IndexDocument
+        Enabled: true
+        HttpVersion: http2
+        Origins:
+        - DomainName: !GetAtt 'S3Bucket.DomainName'
+          Id: s3origin
+          S3OriginConfig:
+            OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}'
+        PriceClass: PriceClass_All
+
+# ============================
+# Stack Outputs
+# These are the values output by the CloudFormation template. Be careful
+# about changing any of them, because of them are exported with specific
+# names so that the other task related CF templates can use them.
+# ============================
+Outputs:
+
+  Name:
+    Description: Stack Name
+    Value: !Ref AWS::StackName
+
+  BucketName:
+    Description: Data bucket
+    Value: !Ref S3Bucket
+
+  DistributionId:
+    Description: 'CloudFront Distribution ID'
+    Value: !Ref CloudFrontDistribution
+
+  Domain:
+    Description: 'Cloudfront Domain'
+    Value: !GetAtt CloudFrontDistribution.DomainName
