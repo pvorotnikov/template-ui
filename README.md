@@ -1,4 +1,13 @@
-# ui-template
+# template-ui
+
+This is a template repository for a project based on React and Redux using TypeScript
+having a customizable Semantic UI as UI library and some widely used libraries.
+The reasoning behind having such template project is to speed up common project
+bootstrapping procedures.
+
+# How to use
+
+You can fork this repository or start anew by copying all the files in your project.
 
 ## Available Scripts
 

@@ -1,6 +1,11 @@
 {
   "name": "template-ui",
   "description": "UI Template",
+  "repository": "https://github.com/pvorotnikov/template-ui",
+  "author": "Petar Vorotnikov",
+  "engines": {
+		"node": ">=8"
+	},
   "version": "1.0.0",
   "private": true,
   "dependencies": {
