@@ -73,11 +73,9 @@ Resources:
           AllowedMethods:
           - GET
           - HEAD
-          - OPTIONS
           CachedMethods:
           - GET
           - HEAD
-          - OPTIONS
           Compress: true
           DefaultTTL: 3600 # in seconds
           ForwardedValues:
@@ -87,7 +85,7 @@ Resources:
           MaxTTL: 86400 # in seconds
           MinTTL: 60 # in seconds
           TargetOriginId: s3origin
-          ViewerProtocolPolicy: allow-all
+          ViewerProtocolPolicy: redirect-to-https
         DefaultRootObject: !Ref IndexDocument
         Enabled: true
         HttpVersion: http2
